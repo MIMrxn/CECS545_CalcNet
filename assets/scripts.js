@@ -36,7 +36,7 @@ function machine_i() {
 	var curr_stmt = null;
 	for(var i=0; i<inputs.length-1; i++) {
 		curr_stmt = inputs[i].split(".")[0];
-		console.log("This is the current statement: " + curr_stmt + "\n");
+		//console.log("This is the current statement: " + curr_stmt + "\n");
 		
 		var curr_result = null;
 		curr_result = machine_a(curr_stmt);
@@ -59,7 +59,7 @@ function machine_i() {
 
 function machine_a(stmt) {
 	var rhs = stmt.split("=")[1];
-	console.log("This is the current right hand side: " + rhs + "\n");
+	//console.log("This is the current right hand side: " + rhs + "\n");
 
 	var e_result = null;
 	e_result = machine_e(rhs);
@@ -79,7 +79,7 @@ function machine_e(expression) {
 
 	for(var i=0; i<terms.length; i++) {
 		var term = terms[i];
-		console.log("This is term " + (i+1) + ": " + term);
+		//console.log("This is term " + (i+1) + ": " + term);
 
 		//	TODO: We will have to transition to some type of pattern here
 		//	to support two T machines and 
@@ -89,6 +89,33 @@ function machine_e(expression) {
 
 function machine_t(term) {
 	//	TODO: all functionality
+}
+
+function machine_p(expression) {
+	var power_terms = [];
+
+	// Split off the power terms into the variable and the constant integer exponent
+	// Ex: 4^2 is split off into "4" and "2"
+	power_terms = expression.split("^");
+ 
+	// Get the variable and constant term from the power term
+	var variable_term = power_terms[0];
+	console.log("This is power term 0: " + variable_term);
+
+	var constant_term = power_terms[1];
+	console.log("This is power term 1: " + constant_term);
+
+	// Send load message with the variable term to D machine
+	var concatenated_terms = variable_term + " " + constant_term;
+	console.log("This is concatenated term : " + concatenated_terms);
+
+	var d_result = machine_d(variable_term, concatenated_terms); 
+
+	
+}
+
+function machine_d(variable, variable_and_constant) {
+	// TODO: all functionality
 }
 
 function get_inputs() {
