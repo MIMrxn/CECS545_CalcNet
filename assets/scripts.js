@@ -111,7 +111,7 @@ function machine_p(expression) {
 
 	var d_result = machine_d(variable_term, concatenated_terms); 
 
-	
+	// TODO: Use the result value to compute the exponential value and return it to the sender.
 }
 
 function machine_d(variable, variable_and_constant) {
