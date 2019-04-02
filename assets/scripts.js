@@ -82,13 +82,41 @@ function machine_e(expression) {
 		//console.log("This is term " + (i+1) + ": " + term);
 
 		//	TODO: We will have to transition to some type of pattern here
-		//	to support two T machines and 
-		var t_result = machine_t(term);
+		//	to support two T machines and async methodology
+		//var t_result = machine_t(term);
+		var t1_result = null;
+		var t2_result = null;
+
+		var mh = new MachineHandler();
+		//console.log("T1 is subscribed: " + mh.isSubscribed("t1"));
+		//console.log("T2 is subscribed: " + mh.isSubscribed("t2"));
+
+		mh.subscribeMachine("t1", machine_t);
+		//mh.subscribeMachine("t2", machine_t);
+
+		mh.publishMachine("t1", term);
+		//mh.publishMachine("t2", term);
 	}
 }
 
 function machine_t(term) {
-	//	TODO: all functionality
+	//	TODO: all functionality is still WORK IN PROGRESS
+	var factors = term.split("*");
+
+	for(var i=0; i<factors.length; i++) {
+		factor = factors[i];
+		
+		if (isConstant(factor)) {
+			console.log("Constant factor: " + factor + "\n");
+			//return factor;
+		} else if (isExponentiation(factor)) {
+			console.log("Exponentiation factor: " + factor + "\n");
+			//	TODO: Go to P
+		} else if (isVariable(factor)) {
+			console.log("Variable factor: " + factor + "\n");
+			//	TODO: Go to D
+		}
+	}
 }
 
 function machine_p(expression) {
@@ -132,5 +160,68 @@ function get_inputs() {
 		return null;
 	} else {
 		return inputs;
+	}
+}
+
+function isConstant(factor) {
+	return /^\d+$/.test(factor);
+}
+
+function isVariable(factor) {
+	return /[A-Z]/.test(factor);
+}
+
+function isExponentiation(factor) {
+	return factor.includes("^");
+}
+
+class MachineHandler {
+
+	constructor() {
+		this.machines = [];
+	}
+
+	subscribeMachine(machine, machine_method) {
+		if(this.machines[machine] == null) {
+			this.machines[machine] = [];
+		}
+
+		this.machines[machine].push(machine_method);
+		console.log("Subscribed: " + machine + "\n");
+	}
+
+	publishMachine(machine, message) {
+		/*
+		for(const machine_method of this.machines[machine]) {
+			console.log("Message is " + message + "\n");
+			console.log("And function is " + machine_method + "\n");
+			machine_method(message);
+		}
+		*/
+		this.machines[machine].forEach(function (machine_method) {
+			console.log("Message is " + message + "\n");
+			console.log("And function is " + machine_method(message) + "\n");
+			machine_method(message);
+		});
+	}
+
+	/*
+	isSubscribed(machine) {
+		for(mech in this.machines) {
+			if(mech === machine) {
+				return true;
+			}
+		}
+		return false;
+	}
+	*/
+
+	unsubscribe(machine) {
+		for(this.machine in this.machines) {
+			if(this.machine === machine) {
+				delete this.machines[machine];
+				console.log("Deleted machine " + machine + " from subscriptions.\n");
+			}
+		}
 	}
 }
