@@ -62,7 +62,7 @@ function machine_a(stmt) {
 	//console.log("This is the current right hand side: " + rhs + "\n");
 
 	var e_result = null;
-	e_result = machine_e(rhs);
+	e_result = machine_p(rhs);
 
 	if(e_result === null) {
 		alert("There was an error retrieving result from Machine E with statement: " + stmt + "\n");
@@ -119,6 +119,7 @@ function machine_t(term) {
 	}
 }
 
+// TODO: not sure I did this right... please correct any mistakes.
 function machine_p(expression) {
 	var power_terms = [];
 
@@ -138,12 +139,57 @@ function machine_p(expression) {
 	console.log("This is concatenated term : " + concatenated_terms);
 
 	var d_result = machine_d(variable_term, concatenated_terms); 
+	console.log(d_result);
 
-	// TODO: Use the result value to compute the exponential value and return it to the sender.
+	// Use the result value to compute the exponential value and return it to the sender.
+	console.log("The result of the exponential is: " + Math.pow(d_result, constant_term));
+	return Math.pow(d_result, constant_term);
 }
 
+// TODO: not sure I did this right... please correct any mistakes.
 function machine_d(variable, variable_and_constant) {
-	// TODO: all functionality
+	var variable_array = [];
+
+	// Create variable object to store the variable names and their values in.
+	var variable_object = {
+		// Initialize variable with its name and value
+		init: function (name, value) {
+			this.name = name;
+			this.value = value;
+		},
+
+		// Print function
+		print: function () {
+			var description = this.name + " = " + this.value;
+			return description;
+		},
+
+		// Get variable name
+		get_name: function () {
+			return this.name;
+		},
+
+		// Get variable's current value
+		get_value: function () {
+			return this.value;
+		}
+	};
+
+	// Split the message term into the variable name and constant
+	// Create a new object and initialize with given terms, then push to array.
+	var message_term = variable_and_constant.split(" ");
+	var varname = message_term[0];
+	var constant = message_term[1];
+	var stored_var = Object.create(variable_object);
+	stored_var.init(varname, constant);
+	variable_array.push(stored_var);
+
+	// Return the current value of the variable
+	for(var i = 0; i < variable_array.length; i++) {
+		if(variable_array[i].get_name() === variable) {
+			return variable_array[i].get_value();
+		}
+	}
 }
 
 function get_inputs() {
