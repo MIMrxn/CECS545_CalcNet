@@ -68,7 +68,7 @@ class MachineI {
 		this.machine_d = machine_d;
 	}
 
-	run() {
+	async run() {
 		//var keep_drawing = true;
 		var curr_stmt = null;
 		for(var i=0; i<this.inputs.length-1; i++) {
@@ -80,7 +80,9 @@ class MachineI {
 			var curr_result = null;
 			//curr_result = machine_a(curr_stmt);
 			var machine_a = new MachineA(curr_stmt, this.machine_d);
-			curr_result = machine_a.run();
+			curr_result = await machine_a.run();
+			console.log("This is the async result: "+curr_result+"\n");
+			//var resolution = await machine_a.run();
 
 			if(curr_result === null) {
 				alert("There was an error retrieving result from Machine A with statement: " + curr_stmt + "\n");
@@ -162,7 +164,7 @@ class MachineD {
 		this.vars_array = [];
 	}
 
-	load(letter) {
+	async load(letter) {
 		if(this.vars_array[letter] === null) {
 			alert("There is no value associated with that value.");
 		} else {
@@ -172,7 +174,7 @@ class MachineD {
 		}
 	}
 
-	store(letter, const_value) {
+	async store(letter, const_value) {
 		this.vars_array[letter] = const_value;
 		this.draw("Store", letter, const_value);
 		return true;
@@ -230,14 +232,14 @@ class MachineA {
 		this.machine_d = machine_d;
 	}
 
-	run() {
+	async run() {
 		var lhs = this.stmt.split("=")[0];
 		var rhs = this.stmt.split("=")[1];
 		console.log("This is the current right hand side: " + rhs + "\n");
 		var e_result = null;
 		//e_result = machine_p(this.rhs);
 		var machine_e = new MachineE(rhs, this.machine_d);
-		e_result = machine_e.run();
+		e_result = await machine_e.run();
 
 		if(e_result === null) {
 			alert("There was an error retrieving result from Machine E with statement: " + this.stmt + "\n");
@@ -245,7 +247,7 @@ class MachineA {
 		} else {
 			//	Send result (Store MSG) to D machine
 			//	Upon receiving Stored result MSG return value to I Machine
-			var stored = this.machine_d.store(lhs, e_result);
+			var stored = await this.machine_d.store(lhs, e_result);
 			if(stored) {
 				console.log(lhs + " = " + rhs + " = " + e_result);
 				this.draw(rhs, e_result);
@@ -290,7 +292,7 @@ class MachineE {
 		this.machine_d = machine_d;
 	}
 
-	run() {
+	async run() {
 		var terms = [];
 		terms = this.expression.split("+");
 
@@ -302,7 +304,7 @@ class MachineE {
 			var t_result = null;
 
 			var machine_t = new MachineT(term, this.machine_d);
-			var product = machine_t.run();
+			var product = await machine_t.run();
 			sum += product;
 
 			this.draw(term, product, sum);
@@ -354,7 +356,7 @@ class MachineT {
 		this.machine_d = machine_d;
 	}
 
-	run() {
+	async run() {
 		var factors = this.term.split("*");
 
 		var product = 1;
@@ -369,12 +371,12 @@ class MachineT {
 			} else if (isExponentiation(factor)) {
 				console.log("Exponentiation factor: " + factor + "\n");
 				var machine_p = new MachineP(factor, this.machine_d);
-				var p_result = machine_p.run();
+				var p_result = await machine_p.run();
 				product *= p_result;
 				this.draw(factor, p_result, product);
 			} else if (isVariable(factor)) {
 				console.log("Variable factor: " + factor + "\n");
-				var d_result = this.machine_d.load(factor);
+				var d_result = await this.machine_d.load(factor);
 				product *= d_result;
 				this.draw(factor, d_result, product);
 			}
@@ -424,7 +426,7 @@ class MachineP {
 		this.machine_d = machine_d;
 	}
 
-	run() {
+	async run() {
 		var power_terms = [];
 
 		// Split off the power terms into the variable and the constant integer exponent
@@ -439,7 +441,7 @@ class MachineP {
 		console.log("This is power term 1: " + constant_term);
 
 		// Send load message with the variable term to D machine
-		var d_result = this.machine_d.load(variable_term);
+		var d_result = await this.machine_d.load(variable_term);
 		console.log("D result from var " + variable_term + " = " + d_result);
 
 		// Use the result value to compute the exponential value and return it to the sender.
@@ -488,44 +490,8 @@ class MachineHandler {
 		this.machine_p = new MachineP();
 	}
 
-	run() {
-		
-	}
-}
-*/
-
-/*
-class MachineHandler {
-
-	constructor() {
-		this.machines = [];
-	}
-
-	subscribeMachine(machine, machine_method) {
-		if(this.machines[machine] == null) {
-			this.machines[machine] = [];
-		}
-
-		this.machines[machine].push(machine_method);
-		console.log("Subscribed: " + machine + "\n");
-	}
-
-	publishMachine(machine, message) {
-		
-		this.machines[machine].forEach(function (machine_method) {
-			console.log("Message is " + message + "\n");
-			console.log("And function is " + machine_method(message) + "\n");
-			machine_method(message);
-		});
-	}
-
-	unsubscribe(machine) {
-		for(this.machine in this.machines) {
-			if(this.machine === machine) {
-				delete this.machines[machine];
-				console.log("Deleted machine " + machine + " from subscriptions.\n");
-			}
-		}
+	resolveAfter2Seconds() {
+		return new Promise()
 	}
 }
 */
