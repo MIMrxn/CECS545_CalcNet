@@ -54,17 +54,11 @@ function isConstant(factor) {
 }
 
 function isVariable(factor) {
-	return /[A-Z]/.test(factor);
+	return /[a-zA-Z]/.test(factor);
 }
 
 function isExponentiation(factor) {
 	return factor.includes("^");
-}
-
-class MachineHandler {
-	constructor() {
-		this.machine_i = new MachineI();
-	}
 }
 
 class MachineI {
@@ -78,7 +72,7 @@ class MachineI {
 		var curr_stmt = null;
 		for(var i=0; i<this.inputs.length-1; i++) {
 			curr_stmt = this.inputs[i].split(".")[0];
-			//console.log("This is the current statement: " + curr_stmt + "\n");
+			console.log("This is the current statement: " + curr_stmt + "\n");
 			
 			var curr_result = null;
 			//curr_result = machine_a(curr_stmt);
@@ -130,7 +124,7 @@ class MachineA {
 	run() {
 		var lhs = this.stmt.split("=")[0];
 		var rhs = this.stmt.split("=")[1];
-		//console.log("This is the current right hand side: " + rhs + "\n");
+		console.log("This is the current right hand side: " + rhs + "\n");
 		var e_result = null;
 		//e_result = machine_p(this.rhs);
 		var machine_e = new MachineE(rhs, this.machine_d);
@@ -164,7 +158,7 @@ class MachineE {
 		var sum = 0;
 		for(var i=0; i<terms.length; i++) {
 			var term = terms[i];
-			//console.log("This is term " + (i+1) + ": " + term);
+			console.log("This is term " + (i+1) + ": " + term);
 
 			var t_result = null;
 
@@ -189,17 +183,18 @@ class MachineT {
 		var product = 1;
 		for(var i=0; i<factors.length; i++) {
 			var factor = factors[i];
+			console.log("Current factor: "+factor+"\n");
 			
 			if (isConstant(factor)) {
-				//console.log("Constant factor: " + factor + "\n");
+				console.log("Constant factor: " + factor + "\n");
 				product *= factor;
 			} else if (isExponentiation(factor)) {
-				//console.log("Exponentiation factor: " + factor + "\n");
+				console.log("Exponentiation factor: " + factor + "\n");
 				var machine_p = new MachineP(factor, this.machine_d);
 				var p_result = machine_p.run();
 				product *= p_result;
 			} else if (isVariable(factor)) {
-				//console.log("Variable factor: " + factor + "\n");
+				console.log("Variable factor: " + factor + "\n");
 				var d_result = this.machine_d.load(factor);
 				product *= d_result;
 			}
@@ -224,20 +219,37 @@ class MachineP {
 	 
 		// Get the variable and constant term from the power term
 		var variable_term = power_terms[0];
-		//console.log("This is power term 0: " + variable_term);
+		console.log("This is power term 0: " + variable_term);
 
 		var constant_term = power_terms[1];
-		//console.log("This is power term 1: " + constant_term);
+		console.log("This is power term 1: " + constant_term);
 
 		// Send load message with the variable term to D machine
 		var d_result = this.machine_d.load(variable_term);
-		//console.log("D result from var " + variable_term + " = " + d_result);
+		console.log("D result from var " + variable_term + " = " + d_result);
 
 		// Use the result value to compute the exponential value and return it to the sender.
 		//console.log("The result of the exponential is: " + Math.pow(d_result, constant_term));
 		return Math.pow(d_result, constant_term);
 	}
 }
+
+/*
+class MachineHandler {
+	constructor() {
+		this.machine_i = new MachineI();
+		this.machine_d = new MachineD();
+		this.machine_a = new MachineA();
+		this.machine_e = new MachineE();
+		this.machine_t = new MachineT();
+		this.machine_p = new MachineP();
+	}
+
+	run() {
+		
+	}
+}
+*/
 
 /*
 class MachineHandler {
