@@ -1,0 +1,13 @@
+table {
+	position: absolute;
+	width: 100px;
+	height: 100px;
+	top: 25;
+	left: 250;
+	z-index: 10;
+}
+
+canvas {
+	position: absolute;
+	z-index: 1;
+}
