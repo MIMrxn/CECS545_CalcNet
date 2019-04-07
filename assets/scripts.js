@@ -24,15 +24,21 @@ function validate_inputs(theform) {
 }
 
 function run_machines() {
-	//var results = [];
-	//results = machine_i();
 	var machine_d = new MachineD();
 	var machine_i = new MachineI(machine_d);
 	
 	var i_results = machine_i.run().then(function(value) {
 		//	Work with the final results if needed
-		console.log("Value "+ value+"\n");
+		console.log("Values: "+ value+"\n");
 	});
+
+	var machines_canvas = document.getElementById("machines_canvas");
+	var ctx = machines_canvas.getContext("2d");
+	ctx.beginPath();
+	ctx.fillStyle = "black";
+	ctx.restore();
+	ctx.stroke();
+	ctx.closePath();
 
 	return true;
 }
@@ -71,7 +77,7 @@ class MachineI {
 		this.inputs = get_inputs();
 		this.results = [];
 		this.machine_d = machine_d;
-		this.draw();
+		//this.draw();
 	}
 
 	async run() {
@@ -79,16 +85,17 @@ class MachineI {
 		var curr_stmt = null;
 		for(var i=0; i<this.inputs.length-1; i++) {	
 			curr_stmt = this.inputs[i].split(".")[0];
-			//window.setTimeout(this.draw(curr_stmt), 1000);
-			//this.draw(curr_stmt);
 			console.log("This is the current statement: " + curr_stmt + "\n");
-			
+			await new Promise(resolve => {
+				setTimeout(resolve, 1000)
+			})
+			this.draw(curr_stmt);
+
+
 			var curr_result = null;
-			//curr_result = machine_a(curr_stmt);
 			var machine_a = new MachineA(curr_stmt, this.machine_d);
 			curr_result = await machine_a.run();
 			console.log("This is the async result: "+curr_result+"\n");
-			//var resolution = await machine_a.run();
 
 			if(curr_result === null) {
 				alert("There was an error retrieving result from Machine A with statement: " + curr_stmt + "\n");
@@ -96,12 +103,12 @@ class MachineI {
 			} else {
 				this.results.push(curr_result);
 				
-				//window.requestAnimationFrame(this.draw());
 				//	Set timeouts for animation
 				await new Promise(resolve => {
 					setTimeout(resolve, 1000)
 				})
-				this.update(curr_stmt);
+				this.update(curr_stmt, curr_result);
+				this.machine_d.draw();
 			}
 		}
 
@@ -113,10 +120,10 @@ class MachineI {
 		}
 	}
 
-	draw() {
+	draw(curr_stmt) {
 		var machines_canvas = document.getElementById("machines_canvas");
 		var ctx = machines_canvas.getContext("2d");
-		
+
 		//	Inputs rectangle
 		ctx.font = "14px Arial";
 		ctx.fillText("Input Expression", 0+25, 0+25-4);
@@ -134,6 +141,18 @@ class MachineI {
 		//	Populate inputs
 		for(var i=0; i<this.inputs.length-1; i++) {
 			var input_text = this.inputs[i].split(".")[0];
+			if(input_text===curr_stmt) {
+				ctx.clearRect(0+25+8, 0+25+5+(i*25), 185, 23);
+				ctx.beginPath();
+				ctx.lineWidth = "3";
+				ctx.strokeStyle = "blue";
+				ctx.rect(0+25+8, 0+25+5+(i*25), 185, 23);
+				ctx.stroke();
+				ctx.closePath();
+			}
+			ctx.beginPath();
+			ctx.strokeStyle = "black";
+			ctx.lineWidth = "2";
 			if(ctx.measureText(input_text).width > 140) {
 				console.log("Width of "+i+": "+ctx.measureText(input_text).width);
 				input_text = input_text.substring(0, 22);
@@ -146,14 +165,14 @@ class MachineI {
 		for(var i=0; i<this.results.length; i++) {
 			var result = this.results[i];
 			ctx.clearRect(0+25+8-3+200, 0+25+5+(i*25), 40, 23);
-			ctx.rect(0+25+8-3+200, 0+25+5+(i*25), 40, 23);
+			//ctx.rect(0+25+8-3+200, 0+25+5+(i*25), 40, 23);
 			ctx.stroke();
 			ctx.fillText(result, 0+25+8+200, 0+25+22+(i*25));
 		}
 	}
 
 	//	For animation use
-	update(curr_stmt) {
+	update(curr_stmt, curr_result) {
 		var machines_canvas = document.getElementById("machines_canvas");
 		var ctx = machines_canvas.getContext("2d");
 		
@@ -176,7 +195,10 @@ class MachineI {
 			var input_text = this.inputs[i].split(".")[0];
 			if(input_text===curr_stmt) {
 				ctx.clearRect(0+25+8, 0+25+5+(i*25), 185, 23);
+				//ctx.beginPath();
+				//ctx.strokeStyle = "blue";
 				ctx.rect(0+25+8, 0+25+5+(i*25), 185, 23);
+				//ctx.closePath();
 				ctx.stroke();
 			}
 			if(ctx.measureText(input_text).width > 140) {
@@ -191,8 +213,17 @@ class MachineI {
 		for(var i=0; i<this.results.length; i++) {
 			var result = this.results[i];
 			ctx.clearRect(0+25+8-3+200, 0+25+5+(i*25), 40, 23);
-			ctx.rect(0+25+8-3+200, 0+25+5+(i*25), 40, 23);
-			ctx.stroke();
+			if(curr_result === result) {
+				ctx.beginPath();
+				ctx.lineWidth = "3";
+				ctx.strokeStyle = "green";
+				ctx.rect(0+25+8-3+200, 0+25+5+(i*25), 40, 23);
+				ctx.stroke();
+				ctx.closePath();
+			}
+			ctx.beginPath();
+			ctx.strokeStyle = "black";
+			ctx.lineWidth = "2";
 			ctx.fillText(result, 0+25+8+200, 0+25+22+(i*25));
 		}
 	}
@@ -237,6 +268,9 @@ class MachineD {
 		//	Draw connection line
 		//	X = origin + initial offset + machine I input box width + machine I result width + connection + quarter of machine A width
 		//	Y = origin + initial offset + machine I input/result box height / 2 + machine A height box / 2
+		ctx.beginPath();
+		ctx.lineWidth = "2";
+		ctx.fillStyle = "black";
 		ctx.moveTo(0+25+(200+50)+100+(185+50)/4, 0+25+(132/2)+(30/2));
 		ctx.lineTo(0+25+(200+50)+100+(185+50)/4, 0+25+(132/2)+(30/2)+100);
 		ctx.stroke();
@@ -262,14 +296,7 @@ class MachineD {
 
 		ctx.fillText("Machine D", 0+25+(200+50)+100+(185/2), 0+25+(132/2)+100+(30)+2*14);
 
-		//	Connect to other machines
-		ctx.moveTo(0+25+(200+50)+100+(75*3), 0+25+(132/2)+(30)+100);
-		ctx.lineTo(0+25+(200+50)+100+(185+50)+100, 0+25+(132/2)+(30)+100);
-		ctx.stroke();
-
-		ctx.moveTo(0+25+(200+50)+100+(75*3), 0+25+(132/2)+(30)+100);
-		ctx.lineTo(0+25+(200+50)+100+(185+50)+100, 0+25+(132/2)+(30)+100+30+100);
-		ctx.stroke();
+		ctx.closePath();
 	}
 
 	update(msg_type, letter, const_value) {
@@ -284,6 +311,9 @@ class MachineD {
 		ctx.stroke();
 
 		//	Message Type Rectangle
+		ctx.beginPath();
+		ctx.strokeStyle = "green";
+		ctx.lineWidth = "3";
 		ctx.clearRect(0+25+(200+50)+100, 0+25+132/2+(30/2)+100, 75, 30);
 		ctx.rect(0+25+(200+50)+100, 0+25+(132/2)+(30/2)+100, 75, 30);
 		ctx.stroke();
@@ -304,6 +334,10 @@ class MachineD {
 		ctx.stroke();
 		ctx.fillText(const_value, 0+25+(200+50)+100+(75+75)+20, 0+25+(132/2)+(30/2)+100+20);
 		ctx.fillText("Value", 0+25+(200+50)+100+(75+75), 0+25+(132/2)+(30/2)+100-4);
+		ctx.closePath();
+		ctx.beginPath();
+		ctx.strokeStyle = "black";
+		ctx.lineWidth = "2";
 
 		ctx.fillText("Machine D", 0+25+(200+50)+100+(185/2), 0+25+(132/2)+100+(30)+2*14);
 
@@ -363,6 +397,9 @@ class MachineA {
 		//	Draw connection line
 		//	X = origin + initial offset + machine I input box width + machine I result width
 		//	Y = origin + initial offset + machine I input/result box height / 2
+		ctx.beginPath();
+		ctx.lineWidth = "3";
+		ctx.strokeStyle = "blue";
 		ctx.moveTo(0+25+200+50, 0+25+132/2);
 		ctx.lineTo(0+25+200+50+100, 0+25+132/2);
 		ctx.stroke();
@@ -374,7 +411,11 @@ class MachineA {
 		ctx.font = "14px Arial";
 		ctx.fillText(rhs, 0+25+200+50+100+20, 0+25+132/2-(30/2)+20);
 		ctx.fillText("Right Hand Side", 0+25+200+50+100, 0+25+132/2-(30/2)-4);
-		
+		ctx.closePath();
+
+		ctx.beginPath();
+		ctx.strokeStyle = "black";
+		ctx.lineWidth = "2";
 		//	Machine E result rectangle
 		ctx.clearRect(0+25+200+50+100+185, 0+25+132/2-(30/2), 50, 30);
 		ctx.rect(0+25+200+50+100+185, 0+25+132/2-(30/2), 50, 30);
@@ -402,13 +443,21 @@ class MachineA {
 		ctx.font = "14px Arial";
 		ctx.fillText(rhs, 0+25+200+50+100+20, 0+25+132/2-(30/2)+20);
 		ctx.fillText("Right Hand Side", 0+25+200+50+100, 0+25+132/2-(30/2)-4);
-		
+		//ctx.closePath();
+
 		//	Machine E result rectangle
+		ctx.beginPath();
+		ctx.lineWidth = "3";
+		ctx.strokeStyle = "green";
 		ctx.clearRect(0+25+200+50+100+185, 0+25+132/2-(30/2), 50, 30);
 		ctx.rect(0+25+200+50+100+185, 0+25+132/2-(30/2), 50, 30);
 		ctx.stroke();
 		ctx.fillText(e_result, 0+25+200+50+100+185+15, 0+25+132/2-(30/2)+20);
 		ctx.fillText("Result", 0+25+200+50+100+185, 0+25+132/2-(30/2)-4);
+		ctx.closePath();
+		ctx.beginPath();
+		ctx.strokeStyle = "black";
+		ctx.lineWidth = "2";
 
 		ctx.fillText("Machine A", 0+25+200+50+100+185/2, 0+25+132/2+2*14);
 	}
@@ -457,6 +506,9 @@ class MachineE {
 		//	Draw connection line
 		//	X = origin + initial offset + machine I input width + machine I result width + connector + machine A width
 		//	Y = origin + initial offset + machine I input/result box height / 2
+		ctx.beginPath();
+		ctx.lineWidth = "3";
+		ctx.strokeStyle = "blue";
 		ctx.moveTo(0+25+200+50+100+185+50, 0+25+132/2);
 		ctx.lineTo(0+25+200+50+100+185+50+100, 0+25+132/2);
 		ctx.stroke();
@@ -468,6 +520,11 @@ class MachineE {
 		ctx.font = "14px Arial";
 		ctx.fillText(term, 0+25+200+50+100+185+50+100+20, 0+25+132/2-(30/2)+20);
 		ctx.fillText("Term", 0+25+200+50+100+185+50+100, 0+25+132/2-(30/2)-4);
+		ctx.closePath();
+
+		ctx.beginPath();
+		ctx.strokeStyle = "black";
+		ctx.lineWidth = "2";
 
 		//	Result rectangle
 		ctx.clearRect(0+25+200+50+100+185+50+100+100, 0+25+132/2-(30/2), 75, 30);
@@ -504,6 +561,9 @@ class MachineE {
 		ctx.fillText("Term", 0+25+200+50+100+185+50+100, 0+25+132/2-(30/2)-4);
 
 		//	Result rectangle
+		ctx.beginPath();
+		ctx.lineWidth = "3";
+		ctx.strokeStyle = "green";
 		ctx.clearRect(0+25+200+50+100+185+50+100+100, 0+25+132/2-(30/2), 75, 30);
 		ctx.rect(0+25+200+50+100+185+50+100+100, 0+25+132/2-(30/2), 75, 30);
 		ctx.stroke();
@@ -516,6 +576,11 @@ class MachineE {
 		ctx.stroke();
 		ctx.fillText(sum, 0+25+200+50+100+185+50+100+100+75+20, 0+25+132/2-(30/2)+20);
 		ctx.fillText("Sum", 0+25+200+50+100+185+50+100+100+75, 0+25+132/2-(30/2)-4);
+		ctx.closePath();
+
+		ctx.beginPath();
+		ctx.strokeStyle = "black";
+		ctx.lineWidth = "2";
 
 		ctx.fillText("Machine E", 0+25+200+50+100+185+50+100+(100+75)/2, 0+25+132/2+2*14);
 	}
@@ -569,6 +634,7 @@ class MachineT {
 					setTimeout(resolve, 1000)
 				})
 				this.update(factor, d_result, product);
+				this.machine_d.draw();
 			}
 		}
 
@@ -580,6 +646,9 @@ class MachineT {
 		var ctx = machines_canvas.getContext("2d");
 
 		//	Draw connection line
+		ctx.beginPath();
+		ctx.lineWidth = "3";
+		ctx.strokeStyle = "blue";
 		ctx.moveTo(0+25+(200+50)+100+(185+50)+100+(100/2), 0+25+(132/2)+(30/2));
 		ctx.lineTo(0+25+(200+50)+100+(185+50)+100+(100/2), 0+25+(132/2)+(30/2)+100);
 		ctx.stroke();
@@ -591,7 +660,10 @@ class MachineT {
 		ctx.font = "14px Arial";
 		ctx.fillText(factor, 0+25+(200+50)+100+(185+50)+100+20, 0+25+132/2+(30/2)+100+20);
 		ctx.fillText("Factor", 0+25+(200+50)+100+(185+50)+100, 0+25+132/2+(30/2)+100-4);
-		
+		ctx.closePath();
+		ctx.lineWidth = "2";
+		ctx.strokeStyle = "black";
+
 		//	Result rectangle
 		ctx.clearRect(0+25+(200+50)+100+(185+50)+100+(100), 0+25+132/2+(30/2)+100, 75, 30);
 		ctx.rect(0+25+(200+50)+100+(185+50)+100+(100), 0+25+132/2+(30/2)+100, 75, 30);
@@ -625,6 +697,9 @@ class MachineT {
 		ctx.fillText("Factor", 0+25+(200+50)+100+(185+50)+100, 0+25+132/2+(30/2)+100-4);
 		
 		//	Result rectangle
+		ctx.beginPath();
+		ctx.lineWidth = "3";
+		ctx.strokeStyle = "green";
 		ctx.clearRect(0+25+(200+50)+100+(185+50)+100+(100), 0+25+132/2+(30/2)+100, 75, 30);
 		ctx.rect(0+25+(200+50)+100+(185+50)+100+(100), 0+25+132/2+(30/2)+100, 75, 30);
 		ctx.stroke();
@@ -637,6 +712,9 @@ class MachineT {
 		ctx.stroke();
 		ctx.fillText(product, 0+25+(200+50)+100+(185+50)+100+(100+75)+20, 0+25+132/2+(30/2)+100+20);
 		ctx.fillText("Product", 0+25+(200+50)+100+(185+50)+100+(100+75), 0+25+132/2+(30/2)+100-4);
+		ctx.closePath();
+		ctx.lineWidth = "2";
+		ctx.strokeStyle = "black";
 
 		ctx.fillText("Machine T", 0+25+(200+50)+100+(185+50)+100+(100+75)/2, 0+25+132/2+(30/2)+100+3*14);
 	}
@@ -679,6 +757,7 @@ class MachineP {
 			setTimeout(resolve, 1000)
 		})
 		this.update(this.expression, pow_result);
+		this.machine_d.draw();
 		
 		return pow_result;
 	}
@@ -688,6 +767,9 @@ class MachineP {
 		var ctx = machines_canvas.getContext("2d");
 
 		//	Draw connection line(s)
+		ctx.beginPath();
+		ctx.strokeStyle = "blue";
+		ctx.lineWidth = "3";
 		ctx.moveTo(0+25+(200+50)+100+(185+50)+100+(100/2), 0+25+(132/2)+(30/2)+100+(30));
 		ctx.lineTo(0+25+(200+50)+100+(185+50)+100+(100/2), 0+25+(132/2)+(30/2)+100+(30)+100);
 		ctx.stroke();
@@ -703,6 +785,10 @@ class MachineP {
 		ctx.font = "14px Arial";
 		ctx.fillText(pow_expr, 0+25+(200+50)+100+(185+50)+100+20, 0+25+132/2+(30/2)+100+(30)+100+20);
 		ctx.fillText("Power", 0+25+(200+50)+100+(185+50)+100, 0+25+132/2+(30/2)+100+(30)+100-4);
+		ctx.closePath();
+		ctx.beginPath();
+		ctx.strokeStyle = "black";
+		ctx.lineWidth = "2";
 		
 		//	Result rectangle
 		ctx.clearRect(0+25+(200+50)+100+(185+50)+100+(100), 0+25+132/2+(30/2)+100+(30)+100, 100, 30);
@@ -735,29 +821,19 @@ class MachineP {
 		ctx.fillText("Power", 0+25+(200+50)+100+(185+50)+100, 0+25+132/2+(30/2)+100+(30)+100-4);
 		
 		//	Result rectangle
+		ctx.beginPath();
+		ctx.strokeStyle = "green";
+		ctx.lineWidth = "3";
 		ctx.clearRect(0+25+(200+50)+100+(185+50)+100+(100), 0+25+132/2+(30/2)+100+(30)+100, 100, 30);
 		ctx.rect(0+25+(200+50)+100+(185+50)+100+(100), 0+25+132/2+(30/2)+100+(30)+100, 100, 30);
 		ctx.stroke();
 		ctx.fillText(result, 0+25+(200+50)+100+(185+50)+100+(100)+20, 0+25+132/2+(30/2)+100+(30)+100+20);
 		ctx.fillText("Result", 0+25+(200+50)+100+(185+50)+100+(100), 0+25+132/2+(30/2)+100+(30)+100-4);
+		ctx.closePath();
+		ctx.beginPath();
+		ctx.strokeStyle = "black";
+		ctx.lineWidth = "2";
 
 		ctx.fillText("Machine P", 0+25+(200+50)+100+(185+50)+100+(100+100)/3, 0+25+132/2+(30/2)+100+(30)+100+3*14);
 	}
 }
-
-/*
-class MachineHandler {
-	constructor() {
-		this.machine_i = new MachineI();
-		this.machine_d = new MachineD();
-		this.machine_a = new MachineA();
-		this.machine_e = new MachineE();
-		this.machine_t = new MachineT();
-		this.machine_p = new MachineP();
-	}
-
-	resolveAfter2Seconds() {
-		return new Promise()
-	}
-}
-*/
