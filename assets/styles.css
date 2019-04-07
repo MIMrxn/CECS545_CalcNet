@@ -1,16 +1,18 @@
-table {
+canvas {
 	position: absolute;
-	width: 100px;
-	height: 100px;
-	top: 25;
-	left: 250;
-	z-index: 10;
+	margin: auto;
+	width: 1000px;
+	height: 500px;
+	left: 0;
+	right: 0;
+	z-index: 0;
 }
 
-canvas {
+input.button {
 	position: absolute;
 	margin: auto;
 	left: 0;
 	right: 0;
+	top: 630px;
 	z-index: 1;
 }
